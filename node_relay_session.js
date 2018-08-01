@@ -19,9 +19,24 @@ class NodeRelaySession extends EventEmitter {
     this.conf = conf;
   }
 
-  run() {
+  run () {
 
-    let argv = ['-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', this.conf.inPath, '-c', 'copy', '-f', 'flv', this.conf.ouPath];
+    let inArgv = ['-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', this.conf.inPath];
+    let outArgv = ['-f', 'flv', this.conf.ouPath];
+
+    let videoArgv = ['-c:v', 'copy'];
+    let audioArgv = ['-c:a', 'copy'];
+
+    if (this.conf.audio !== null) {
+      if (typeof this.conf.audio == 'boolean' && this.conf.audio === false) {
+        audioArgv = ['-an'];
+      } else if (typeof this.conf.audio == 'string') {
+        audioArgv = ['-c:a', this.conf.audio];
+      }
+    }
+
+    let argv = inArgv.concat(videoArgv, audioArgv, outArgv);
+
     if (this.conf.inPath[0] === '/' || this.conf.inPath[1] === ':') {
       argv.unshift('-1');
       argv.unshift('-stream_loop');
@@ -35,6 +50,9 @@ class NodeRelaySession extends EventEmitter {
       }
     }
 
+
+
+    // start ffmpeg with the specified arguments
     Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
     this.ffmpeg_exec.on('error', (e) => {
@@ -55,7 +73,7 @@ class NodeRelaySession extends EventEmitter {
     });
   }
 
-  end() {
+  end () {
     this.ffmpeg_exec.kill('SIGKILL');
   }
 }
