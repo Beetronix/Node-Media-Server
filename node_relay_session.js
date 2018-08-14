@@ -22,9 +22,19 @@ class NodeRelaySession extends EventEmitter {
   run () {
 
     let inArgv = ['-fflags', 'nobuffer', '-analyzeduration', '1000000', '-i', this.conf.inPath];
-    let outArgv = ['-f', 'flv', this.conf.ouPath];
+    let outArgv = [];
+    if (this.conf.multi_qualities && this.conf.multi_qualities === true) {
+      outArgv = outArgv.concat(
+        ['-f', 'flv', '-map', '0:0', this.conf.ouPath], // original quality (1080x960)
+        ['-f', 'flv', '-map', '0:0', '-vf', "scale=iw/1.5:ih/1.5", this.conf.ouPath + '_hd'], // high definition (720x640)
+        ['-f', 'flv', '-map', '0:0', '-vf', "scale=iw/2:ih/2", this.conf.ouPath + '_md'], // medium definition (540x480)
+        ['-f', 'flv', '-map', '0:0', '-vf', "scale=iw/3:ih/3", this.conf.ouPath + '_ld'], // low definition (360x320)
+        ['-f', 'flv', '-map', '0:0', '-vf', "scale=iw/4:ih/4", this.conf.ouPath + '_vld'], // very low definition (270x240)
+      )
+    } else
+      outArgv = ['-f', 'flv', this.conf.ouPath];
 
-    let videoArgv = ['-c:v', 'copy'];
+    let videoArgv = ['-c:v', 'h264'];
     let audioArgv = ['-c:a', 'copy'];
 
     if (this.conf.audio !== null) {
